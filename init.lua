@@ -14,6 +14,8 @@ local ONLY_CLOSE_APPS = {
   ['微信'] = true,
   ['QQ'] = true,
   ['访达'] = true,
+  ['Raycast'] = true,
+  ['PixPin'] = true,
 }
 --------------------------------------------------------------------------------
 -- 窗口操作
@@ -86,26 +88,46 @@ hs.hotkey.bind(super, 'return', function()
   task:start()
 end)
 
-hs.hotkey.bind(super, 'p', function() hs.application.launchOrFocus 'Raycast' end)
+-- hs.hotkey.bind(super, 'p', function() hs.application.launchOrFocus 'Raycast' end)
+
+-- 绑定 Cmd + Opt(Alt) + E 打开新的访达窗口，并默认跳转到家目录
+hs.hotkey.bind(super, 'e', function()
+  local script = [[
+        tell application "Finder"
+            make new Finder window to home
+            activate
+        end tell
+    ]]
+  hs.osascript.applescript(script)
+end)
 
 -- 使用 raycast 绑定的快捷键(不受 hs 管理)
--- super + e 打开访达
 
 --------------------------------------------------------------------------------
 -- 媒体控制
 --------------------------------------------------------------------------------
+local function postSystemKey(key)
+  hs.eventtap.event.newSystemKeyEvent(key, true):post()
+  hs.eventtap.event.newSystemKeyEvent(key, false):post()
+end
+
+local function showVolumeAlert()
+  hs.timer.doAfter(0.02, function()
+    local dev = hs.audiodevice.defaultOutputDevice()
+    local volume = math.floor(dev:volume() + 0.5)
+    hs.alert.closeAll()
+    hs.alert.show('音量: ' .. volume .. '%', { atScreenEdge = 2 })
+  end)
+end
+
 hs.hotkey.bind(superShift, 'up', function()
-  local dev = hs.audiodevice.defaultOutputDevice()
-  dev:setVolume(dev:volume() + 5)
-  hs.alert.closeAll()
-  hs.alert.show('音量: ' .. math.floor(dev:volume() + 0.5) .. '%', { atScreenEdge = 2 })
+  postSystemKey 'SOUND_UP'
+  showVolumeAlert()
 end)
 
 hs.hotkey.bind(superShift, 'down', function()
-  local dev = hs.audiodevice.defaultOutputDevice()
-  dev:setVolume(dev:volume() - 5)
-  hs.alert.closeAll()
-  hs.alert.show('音量: ' .. math.floor(dev:volume() + 0.5) .. '%', { atScreenEdge = 2 })
+  postSystemKey 'SOUND_DOWN'
+  showVolumeAlert()
 end)
 
 --------------------------------------------------------------------------------
